@@ -53,7 +53,7 @@ Windows 10 Pro, Version 1803 x64 で動作を確認しています。
    - 場所: 作成したソリューション ディレクトリのパス
    - ソリューションのディレクトリを作成: オフ
 
-   ![新しいプロジェクト](.\images\NewSolution.png)
+   ![新しいプロジェクト](./images/NewSolution.png)
 
    再頒布可能ファイルは、以下のように指定してください。
    
@@ -68,7 +68,7 @@ Windows 10 Pro, Version 1803 x64 で動作を確認しています。
    2. 参照ファイルを配置する。
    3. Visual Studio の [参照の追加] から参照ファイルを指定する。
 
-   ![参照の追加](.\images\AddReference.png)
+   ![参照の追加](./images/AddReference.png)
 
    このように設定することで、ソリューション構成に応じたファイルを参照できるようになります。
 
