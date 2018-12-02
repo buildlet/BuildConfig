@@ -18,7 +18,10 @@ BuildConfig.ps1 を削除してください。
 
 動作環境
 --------
-Windows 10 Pro, Version 1803 x64 で動作を確認しています。
+以下の環境で動作を確認しています。
+ - Windows 10 Pro, Version 1803 x64 日本語
+ - Visual Studio Community 2017 (Version 15.9.3)
+ - PowerShell 5.1.17134.407
 
 
 使用方法
