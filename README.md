@@ -22,8 +22,8 @@ BuildConfig.ps1 を削除してください。
 以下の環境で動作を確認しています。
 
 - Windows 10 Pro, Version 1803 x64 日本語
-- Visual Studio Community 2017 (Version 15.9.3)
-- PowerShell 5.1.17134.407
+- Visual Studio Community 2017
+- PowerShell 5.1
 
 使用方法
 --------
@@ -74,15 +74,19 @@ BuildConfig.ps1 を削除してください。
 
 3. ビルド後イベント (PostBuildEvent) のコマンドラインを指定します。
 
-       PowerShell.exe -File $(SolutionDir)..\BuildConfig.ps1 -PostBuildEvent -SolutionName $(SolutionName) -ProjectName $(ProjectName) -ConfigurationName $(ConfigurationName) -TargetFileNames $(TargetFileName),redist1.dll,redist2.dll,ref.dll
+       PowerShell.exe -File $(SolutionDir)..\BuildConfig.ps1 -PostBuildEvent -SolutionName $(SolutionName) -ProjectName $(ProjectName) -ConfigurationName $(ConfigurationName) -TargetFileNames $(TargetFileName),$(TargetName).xml
 
-   この例では、出力ファイルに $(TargetFileName)、redist1.dll、redist2.dll および ref.dll を指定しています。
+   この例では、出力ファイルに $(TargetFileName) および $(TargetName).xml を指定しています。  
+   複数ファイルの場合は、コンマ区切りで指定してください。  
+   PowerShell.exe がひとつの引数として解釈できるように、スペースは含めないでください。
 
 4. ビルド前イベント (PreBuildEvent) のコマンドラインを指定します。
 
-       PowerShell.exe -File $(SolutionDir)..\BuildConfig.ps1 -PreBuildEvent -SolutionName $(SolutionName) -ProjectName $(ProjectName) -ConfigurationName $(ConfigurationName) -ReferenceFileNames redist1.dll,redist2.dll
+       PowerShell.exe -File $(SolutionDir)..\BuildConfig.ps1 -PreBuildEvent -SolutionName $(SolutionName) -ProjectName $(ProjectName) -ConfigurationName $(ConfigurationName) -ReferenceFileNames redist1.dll,redist2.dll,redist3.dll
 
-   この例では、参照ファイルに redist1.dll および redist2.dll を指定しています。
+   この例では、参照ファイルに redist1.dll, redist2.dll および redist3.dll を指定しています。  
+   複数ファイルの場合は、コンマ区切りで指定してください。  
+   PowerShell.exe がひとつの引数として解釈できるように、スペースは含めないでください。
 
 ライセンス
 ----------
@@ -93,11 +97,14 @@ BuildConfig.ps1 を削除してください。
 変更履歴
 --------
 
-### Version 1.0.0.0 (2018/12/09) ###
+### Version 1.0.2.0 (2019/02/11)
 
-- RedistFileNames パラメーターを廃止
-- バージョンを 1.0.0.0 に戻して再リリース
+- マイナーバージョンアップ
 
-### Version 3.0.1.0 (2018/12/01) ###
+### Version 1.0.1.0 (2018/12/12)
+
+- マイナーバージョンアップ
+
+### Version 1.0.0.0 (2018/12/09)
 
 - 1st リリース
