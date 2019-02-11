@@ -1,7 +1,7 @@
 ﻿<###############################################################################
  The MIT License (MIT)
 
- Copyright (c) 2018 Daiki Sakamoto
+ Copyright (c) 2018-2019 Daiki Sakamoto
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -23,50 +23,59 @@
 ################################################################################>
 
 <#
-    .SYNOPSIS
-    Visual Studio ソリューションの操作・設定をサポートするツールを提供します。
 
-    .DESCRIPTION
-    このファイルはソリューション ディレクトリのひとつ上の階層に配置してください。
+.SYNOPSIS
+Visual Studio ソリューションの操作・設定をサポートするツールを提供します。
 
-    .INPUTS
-    なし
-    このスクリプトはパイプラインからの入力を受け取りません。
+.DESCRIPTION
+このファイルはソリューション ディレクトリのひとつ上の階層に配置してください。
 
-    .OUTPUTS
-    なし
-    このスクリプトのパイプラインへの出力はありません。
+.INPUTS
+なし
+このスクリプトはパイプラインからの入力を受け取りません。
 
-    .EXAMPLE
-    BuildConfig.ps1 -New -SolutionName Solution1
-    新しいソリューション Solution1 のためのソリューション ディレクトリを作成します。
+.OUTPUTS
+なし
+このスクリプトのパイプラインへの出力はありません。
 
-    .EXAMPLE
-    BuildConfig.ps1 -Clean -SolutionName Solution1
-    ソリューション Solution1 をクリーニングします。
+.EXAMPLE
+BuildConfig.ps1 -New -SolutionName Solution1
+新しいソリューション Solution1 のためのソリューション ディレクトリを作成します。
 
-    .EXAMPLE
-    PowerShell.exe -File $(SolutionDir)..\BuildConfig.ps1 -PostBuildEvent -SolutionName $(SolutionName) -ProjectName $(ProjectName) -ConfigurationName $(ConfigurationName) -TargetFileNames $(TargetFileName),redist1.dll,redist2.dll
-    ビルド後イベント (PostBuildEvent) のコマンドラインを指定します。
-    この例では、出力ファイルに $(TargetFileName)、redist1.dll および redist2.dll が指定されています。
+.EXAMPLE
+BuildConfig.ps1 -Clean -SolutionName Solution1
+ソリューション Solution1 をクリーニングします。
 
-    .EXAMPLE
-    PowerShell.exe -File $(SolutionDir)..\BuildConfig.ps1 -PreBuildEvent -SolutionName $(SolutionName) -ProjectName $(ProjectName) -ConfigurationName $(ConfigurationName) -ReferenceFileNames redist1.dll,redist2.dll
-    ビルド前イベント (PreBuildEvent) のコマンドラインを指定します。
-    この例では、参照ファイルに redist1.dll および redist2.dll が指定されています。
+.EXAMPLE
+PowerShell.exe -File $(SolutionDir)..\BuildConfig.ps1 -PostBuildEvent -SolutionName $(SolutionName) -ProjectName $(ProjectName) -ConfigurationName $(ConfigurationName) -TargetFileNames $(TargetFileName)
+ビルド後イベント (PostBuildEvent) のコマンドラインで、出力ファイルに $(TargetFileName) を指定します。
 
-    .LINK
-    https://github.com/buildlet/BuildConfig
+.EXAMPLE
+PowerShell.exe -File $(SolutionDir)..\BuildConfig.ps1 -PostBuildEvent -SolutionName $(SolutionName) -ProjectName $(ProjectName) -ConfigurationName $(ConfigurationName) -TargetFileNames $(TargetFileName),$(TargetName).xml
+ビルド後イベント (PostBuildEvent) のコマンドラインで、出力ファイルに $(TargetFileName) および $(TargetName).xml を指定します。
+
+.EXAMPLE
+PowerShell.exe -File $(SolutionDir)..\BuildConfig.ps1 -PreBuildEvent -SolutionName $(SolutionName) -ProjectName $(ProjectName) -ConfigurationName $(ConfigurationName) -ReferenceFileNames redist1.dll,redist2.dll,redist3.dll
+ビルド前イベント (PreBuildEvent) のコマンドラインで、参照ファイルに redist1.dll, redist2.dll および redist3.dll を指定します。
+
+.LINK
+https://github.com/buildlet/BuildConfig
+
 #>
 
+# CmdletBinding
+[CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'high')]
 
 # Parameters
 Param(
 
-    # このスクリプトのバージョン情報を表示します。
     [Parameter(ParameterSetName = 'Version', Position = 0)]
-    [switch]$Version,
+    [switch]
+    # このスクリプトのバージョン情報を表示します。
+    $Version,
 
+    [Parameter(ParameterSetName = 'New', Mandatory = $true, Position = 0)]
+    [switch]
     # 新しいソリューション ディレクトリを作成します。
     # 指定された名前のソリューション ディレクトリを作成し、その直下に次のディレクトリを作成します。
     #   - .images
@@ -79,77 +88,80 @@ Param(
     #   - TestResults (for Test Results of MSTest)
     # Licenses ディレクトリに LICENSE ファイルを作成します。
     # Properties ディレクトリに AssemblyInfoBase ファイル ('AssemblyInfoBase.cs') を作成します。
-    [Parameter(ParameterSetName = 'New', Mandatory = $true, Position = 0)]
-    [switch]$New,
+    $New,
 
-    # ソリューション ディレクトリをクリーニングします。
     [Parameter(ParameterSetName = 'Clean', Mandatory = $true, Position = 0)]
-    [switch]$Clean,
+    [switch]
+    # ソリューション ディレクトリをクリーニングします。
+    $Clean,
 
-    # ビルド後イベント (PostBuildEvent) のコマンドラインを指定します。
     [Parameter(ParameterSetName = 'PostBuildEvent', Mandatory = $true, Position = 0)]
-    [switch]$PostBuildEvent,
+    [Parameter(ParameterSetName = 'PostBuildEventExample', Mandatory = $true, Position = 0)]
+    [switch]
+    # ビルド後イベント (PostBuildEvent) のコマンドラインを指定します。
+    $PostBuildEvent,
 
-    # ビルド前イベント (PreBuildEvent) のコマンドラインを指定します。
     [Parameter(ParameterSetName = 'PreBuildEvent', Mandatory = $true, Position = 0)]
-    [switch]$PreBuildEvent,
+    [Parameter(ParameterSetName = 'PreBuildEventExample', Mandatory = $true, Position = 0)]
+    [switch]
+    # ビルド前イベント (PreBuildEvent) のコマンドラインを指定します。
+    $PreBuildEvent,
 
-    # ソリューション名を指定します。
     [Parameter(ParameterSetName = 'New', Mandatory = $true, Position = 1, HelpMessage = 'ソリューション名を指定します。')]
     [Parameter(ParameterSetName = 'Clean', Mandatory = $true, Position = 1, HelpMessage = 'ソリューション名を指定します。')]
     [Parameter(ParameterSetName = 'PostBuildEvent', Mandatory = $true, Position = 1, HelpMessage = 'ソリューション名を指定します。')]
     [Parameter(ParameterSetName = 'PreBuildEvent', Mandatory = $true, Position = 1, HelpMessage = 'ソリューション名を指定します。')]
-    [string]$SolutionName,
+    [string]
+    # ソリューション名を指定します。
+    $SolutionName,
 
-    # ライセンスの種類を指定します。
-    # 既定では MIT License が指定されます。
     [Parameter(ParameterSetName = 'New', Position = 2, HelpMessage = 'ライセンスの種類を指定します。')]
     [ValidateSet('MIT')]
-    [string]$License = 'MIT',
+    [string]
+    # ライセンスの種類を指定します。
+    # 既定では MIT License が指定されます。
+    $License = 'MIT',
 
-    # プロジェクト名を指定します。
     [Parameter(ParameterSetName = 'PostBuildEvent', Mandatory = $true, Position = 2, HelpMessage = 'プロジェクト名を指定します。')]
     [Parameter(ParameterSetName = 'PreBuildEvent', Mandatory = $true, Position = 2, HelpMessage = 'プロジェクト名を指定します。')]
-    [string]$ProjectName,
+    [string]
+    # プロジェクト名を指定します。
+    $ProjectName,
 
-    # ソリューション構成 (Debug または Release) を指定します。
     [Parameter(ParameterSetName = 'PostBuildEvent', Mandatory = $true, Position = 3, HelpMessage = 'ソリューション構成 (Debug または Release) を指定します。')]
     [Parameter(ParameterSetName = 'PreBuildEvent', Mandatory = $true, Position = 3, HelpMessage = 'ソリューション構成 (Debug または Release) を指定します。')]
     [ValidateSet('Debug', 'Release')]
-    [string]$ConfigurationName,
+    [string]
+    # ソリューション構成 (Debug または Release) を指定します。
+    $ConfigurationName,
 
-    # PowerShell モジュールの名前を指定します。
     [Parameter(ParameterSetName = 'PostBuildEvent', HelpMessage = 'PowerShell モジュールの名前を指定します。')]
-    [string]$PowerShellModuleName,
+    [string]
+    # PowerShell モジュールの名前を指定します。
+    $PowerShellModuleName,
 
+    [Parameter(ParameterSetName = 'PostBuildEvent', Mandatory = $true, HelpMessage = '出力ファイルを指定します。')]
+    [string]
     # プロジェクトの出力ディレクトリ ($SolutionName\$ProjectName\bin\$ConfigurationName\) から
     # ソリューションの出力ディレクトリ ($SolutionName\bin\$ConfigurationName\) にコピーするファイルを指定します。
     # 複数ファイルの場合は、コンマ区切りで指定してください。
     # PowerShell.exe がひとつの引数として解釈できるように、スペースは含めないでください。
-    [Parameter(ParameterSetName = 'PostBuildEvent', Mandatory = $true, HelpMessage = '出力ファイルを指定します。')]
-    [string]$TargetFileNames,
+    $TargetFileNames,
 
-
-    # 再頒布可能ファイルを指定します。
-    # 複数ファイルの場合は、コンマ区切りで指定してください。
-    # PowerShell.exe がひとつの引数として解釈できるように、スペースは含めないでください。
-    # [Parameter(ParameterSetName = 'PreBuildEvent', HelpMessage = '再頒布可能ファイルを指定します。')]
-    # [string]$RedistFileNames,
-
-
+    [Parameter(ParameterSetName = 'PreBuildEvent', HelpMessage = '参照ファイルを指定します。')]
+    [string]
     # 参照ファイルを指定します。
     # Redistributables ディレクトリ ($SolutionName\$ProjectName\Redistributables\$ConfigurationName\) に配置されているファイルを指定できます。
     # 指定されたファイルは、References ディレクトリ ($SolutionName\$ProjectName\References\) にコピーされます。
     # 複数ファイルの場合は、コンマ区切りで指定してください。
     # PowerShell.exe がひとつの引数として解釈できるように、スペースは含めないでください。
-    [Parameter(ParameterSetName = 'PreBuildEvent', HelpMessage = '参照ファイルを指定します。')]
-    [string]$ReferenceFileNames
+    $ReferenceFileNames
 )
 
 
 $ScriptName = 'BUILDLet Build Configuration Tool'
-$ScriptVersion = '1.0.0.0'
-$ScriptCopyrightYear = '2018'
+$ScriptVersion = '1.0.2.0'
+$ScriptCopyrightYear = '2018-2019'
 $ScriptCopyrightHolder = 'Daiki Sakamoto'
 $ScriptTitleMessage = @"
 $ScriptName [Version $ScriptVersion]
@@ -161,7 +173,7 @@ Copyright (c) $ScriptCopyrightYear $ScriptCopyrightHolder
 $AssemblyVersion = '3.0.1.0'
 $AssemblyFileVersion = '3.0.1.0'
 
-$AssemblyCopyrightYear = '2014-2018'
+$AssemblyCopyrightYear = '2019'
 $AssemblyCopyrightHolder = 'Daiki Sakamoto'
 $AssemblyCopyright = "Copyright © $AssemblyCopyrightYear $AssemblyCopyrightHolder"
 
@@ -170,6 +182,7 @@ $AssemblyTrademark = ''
 
 $AssemblyInfoBaseFileName = 'AssemblyInfoBase.cs'
 $AssemblyInfoBaseContent =  @"
+using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -182,11 +195,15 @@ using System.Runtime.InteropServices;
 // PowerShell モジュールをビルドする場合は、AssemblyFileVersion と同じ値を AssemblyVersion に指定してください。
 [assembly: AssemblyVersion("$AssemblyVersion")]
 [assembly: AssemblyFileVersion("$AssemblyFileVersion")]
+
+// CA1014: 共通言語仕様 (CLS: Common Language Specification) 準拠して、
+// 外部から参照可能な型を公開する場合は、このアセンブリの CLSCompliant 属性を true に設定します。
+// [assembly: CLSCompliant(true)]
 "@
 
 
 # for License
-$LicenseCopyrightYear = '2018'
+$LicenseCopyrightYear = '2019'
 $LicenseCopyrightHolder = 'Daiki Sakamoto'
 
 # MIT License
@@ -244,16 +261,36 @@ $RemoveItems = @(
     'TestResults\*'
 )
 
+################################################################################
+<# Template
+Function Verb-Noun {
+
+    # CmdletBinding
+    [CmdletBinding()]
+
+    # Parameter(s)
+    Param ()
+
+    # Begin
+    Begin {}
+
+    # Process
+    Process {}
+
+    # End
+    End {}
+}
+#>
 
 ################################################################################
 # New
 Function New-SolutionDir {
 
     # CmdletBinding
-    [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'high')]
+    # [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'high')]
 
     # Parameters
-    Param ()
+    # Param ()
 
     # Begin
     # Begin {}
@@ -294,16 +331,15 @@ Function New-SolutionDir {
     # End {}
 }
 
-
 ################################################################################
 # Clean
 Function Clean-SolutionDir {
 
     # CmdletBinding
-    [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'high')]
+    # [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'high')]
 
     # Parameter(s)
-    Param ()
+    # Param ()
 
     # Begin
     # Begin {}
@@ -324,8 +360,8 @@ Function Clean-SolutionDir {
 
 
         # Create Deletion Item (Directory / File) List to be shown for confirmation
-        $RemoveItems_display_list = @("`n")
-        $RemoveItems_list | % { $RemoveItems_display_list += "$_`n" }
+        $RemoveItems_display_list = @('FILE:')
+        $RemoveItems_list | % { $RemoveItems_display_list += "`n$_" }
 
 
         # Confirmation to Continue
@@ -341,7 +377,6 @@ Function Clean-SolutionDir {
     # End
     # End {}
 }
-
 
 ################################################################################
 # PostBuildEvent
@@ -374,7 +409,6 @@ Function Process-PostBuildEvent {
     # End {}
 }
 
-
 ################################################################################
 # PreBuildEvent
 Function Process-PreBuildEvent {
@@ -392,21 +426,7 @@ Function Process-PreBuildEvent {
     Process {
 
 
-       <# Copy Redistributable File(s): RedistDir --> TargetDir
-        if (-not [string]::IsNullOrWhiteSpace($RedistFileNames)) {
-            $RedistFileNames -split ',' | % {
-                
-                # Copy File
-                $RedistDir | Join-Path -ChildPath $_ | Copy-Item -Destination $TargetDir -Verbose:$VerbosePreference
-
-                # Console Output
-                $_ + ' --> ' + $TargetDir
-            }
-        }
-        #>
-
-
-        # Copy Redistributable File(s): RedistDir --> ReferenceDir
+        # Copy Reference File(s): RedistDir --> ReferenceDir
         if (-not [string]::IsNullOrWhiteSpace($ReferenceFileNames)) {
             $ReferenceFileNames -split ',' | % {
                 
@@ -427,34 +447,10 @@ Function Process-PreBuildEvent {
     # End {}
 }
 
-
-<################################################################################
-# Template
-Function Verb-Noun {
-
-    # CmdletBinding
-    [CmdletBinding()]
-
-    # Parameter(s)
-    Param ()
-
-    # Begin
-    Begin {}
-
-    # Process
-    Process {
-    }
-
-    # End
-    End {}
-}
-#>
-
-
 ################################################################################
 # Main
 
-# Show Message
+# Show Title Message
 switch ($PSCmdlet.ParameterSetName) {
 
     # 'PostBuildEvent' (Verbose Output)
@@ -467,18 +463,17 @@ switch ($PSCmdlet.ParameterSetName) {
     default { $ScriptTitleMessage | Write-Host -ForegroundColor Green }
 }
 
-
 # 'Version': RETURN
 if ($PSCmdlet.ParameterSetName -eq 'Version') { return }
+
 
 
 # Get Solution Directory (SolutionDir)
 $SolutionDir = $PSCommandPath | Split-Path -Parent | Join-Path -ChildPath $SolutionName
 
-
-# PreBuildEvent or PostBuildEvent
+# Prepare Directories for 'PreBuildEvent' or 'PostBuildEvent'
 if ($PSCmdlet.ParameterSetName -like '*BuildEvent') {
-
+    
     # Get Project Directory (ProjectDir)
     $ProjectDir = $SolutionDir | Join-Path -ChildPath $ProjectName
 
@@ -511,10 +506,19 @@ if ($PSCmdlet.ParameterSetName -like '*BuildEvent') {
 }
 
 
+
 # Process
 switch ($PSCmdlet.ParameterSetName) {
+
+    # 'New'
     'New' { New-SolutionDir }
+
+    # 'Clean'
     'Clean' { Clean-SolutionDir }
+
+    # 'PostBuildEvent'
     'PostBuildEvent' { Process-PostBuildEvent }
+
+    # 'PreBuildEvent'
     'PreBuildEvent' { Process-PreBuildEvent }
 }
