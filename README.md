@@ -9,12 +9,12 @@ Visual Studio ソリューションの操作・設定をサポートするツー
 インストール方法
 ----------------
 
-BuildConfig.ps1 をソリューション ディレクトリのひとつ上の階層に配置してください。  
+BuildConfig.ps1 および EnvDTE.psm1 をソリューション ディレクトリのひとつ上の階層に配置してください。  
 
 アンインストール方法
 --------------------
 
-BuildConfig.ps1 を削除してください。
+BuildConfig.ps1 および EnvDTE.psm1 を削除してください。
 
 動作環境
 --------
@@ -31,8 +31,11 @@ BuildConfig.ps1 を削除してください。
 以下の操作・設定をサポートします。  
 詳細はヘルプを参照してください。
 
-1. 新しいソリューション ディレクトリを作成します。  
-   指定された名前のソリューション ディレクトリを作成し、その直下に次のディレクトリを作成します。
+1. 新しいソリューション ディレクトリを作成するには、以下のコマンドを入力します。  
+
+       .\BuildConfig.ps1 -New -SolutionName TestSolution
+
+   指定された名前のソリューション ディレクトリが作成され、その直下に次のディレクトリが作成されます。
 
     - .images
     - Licenses
@@ -43,10 +46,8 @@ BuildConfig.ps1 を削除してください。
     - TestData
     - TestResults
 
-   Licenses ディレクトリに LICENSE ファイルを作成します。  
-   Properties ディレクトリに AssemblyInfoBase ファイル ('AssemblyInfoBase.cs') を作成します。
-
-       .\BuildConfig.ps1 -New -SolutionName TestSolution
+   Licenses ディレクトリに LICENSE ファイルが作成されます。  
+   Properties ディレクトリに AssemblyInfoBase ファイル ('AssemblyInfoBase.cs') が作成されます。
 
    上記コマンドを実行した後、以下の設定で「空のソリューション」を作成してください。
 
@@ -58,17 +59,17 @@ BuildConfig.ps1 を削除してください。
 
    参照ファイルは、以下のように指定してください。
 
-   1. プロジェクト ディレクトリの下に Redistributables ディレクトリ および References ディレクトリを作成する。
-   2. Redistributables ディレクトリの下に、ソリューション構成 (Debug および Release) のディレクトリを作成し、ソリューション構成に応じた参照ファイルを配置する。
-   3. 現在のソリューション構成 (Debug あるいは Release) に応じた参照ファイルを Redistributables ディレクトリから References ディレクトリにコピーする。
-   4. Visual Studio の [参照の追加] から参照ファイルを指定する。
+   1. プロジェクト ディレクトリの下に Redistributables ディレクトリ および References ディレクトリを作成します。
+   2. Redistributables ディレクトリの下に、ソリューション構成 (Debug および Release) のディレクトリを作成し、ソリューション構成に応じた参照ファイルを配置します。
+   3. 現在のソリューション構成 (Debug あるいは Release) に応じた参照ファイルを Redistributables ディレクトリから References ディレクトリにコピーします。
+   4. Visual Studio の [参照の追加] から参照ファイルを指定します。
 
    ![参照の追加](./.images/AddReference.png)
 
    このように設定することで、ビルド時にソリューション構成に応じたファイルを参照できるようになります。  
    NuGet パッケージが用意されておらず、ソリューション構成 (Debug あるいは Release) に応じて参照ファイルを変えたい場合などに使用できます。
 
-2. ソリューション ディレクトリをクリーニングします。
+2. ソリューション ディレクトリをクリーニングするには、以下のコマンドを入力します。
 
        .\BuildConfig.ps1 -Clean -SolutionName TestSolution
 
@@ -88,6 +89,8 @@ BuildConfig.ps1 を削除してください。
    複数ファイルの場合は、コンマ区切りで指定してください。  
    PowerShell.exe がひとつの引数として解釈できるように、スペースは含めないでください。
 
+   ConfigurationName パラメーターを省略して、ソリューション構成を自動的に取得するためには、任意のソリューションで EnvDTE (EnvDTE.8.0.2) NuGet パッケージがインストールされている必要があります。このとき、複数の Visual Studio が起動している場合は、最初に起動した Visual Studio のソリューション構成を取得します。
+
 ライセンス
 ----------
 
@@ -96,6 +99,11 @@ BuildConfig.ps1 を削除してください。
 
 変更履歴
 --------
+
+### Version 1.0.3.0 (2019/02/17)
+
+- PowerShell モジュール用のオプションを追加しました。
+- 構成ファイルとして EnvDTE.psm1 が追加されました。
 
 ### Version 1.0.2.0 (2019/02/11)
 
